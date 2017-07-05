@@ -4,7 +4,8 @@ Basic template for web app using Spark with Kotlin.
 
 ## Todo
 
-- [x] Add H2 JDBC connection
-- [ ] Add Flyway
+- [ ] Add JSON response formatter
 - [ ] Add Guice
-- [ ] Add console logger
+- [x] Add H2 JDBC connection
+- [x] Add Flyway
+- [x] Add console logger
