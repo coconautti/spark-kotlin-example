@@ -13,6 +13,15 @@ object Database {
   }
 
   fun connection(): Connection = DriverManager.getConnection(jdbcConnectionUrl)
+
+  fun withConnection(body: (Connection) -> Unit) {
+    val conn = connection()
+    try {
+      body(conn)
+    } finally {
+      conn.close()
+    }
+  }
 }
 
 class Application
@@ -25,16 +34,14 @@ fun main(args: Array<String>) {
 
   http.get("/status") {
     var response = ""
-    val conn = Database.connection()
-    try {
+    Database.withConnection { conn ->
       val status = if (conn.isClosed) "closed" else "open"
       response += "db test connection: ${status} \n"
 
       val stmt = conn.createStatement()
       val rs = stmt.executeQuery("SELECT * FROM users")
-      response + "db migrated: ${!rs.next()} \n"
-    } finally {
-      conn.close()
+      response += "db migrated: ${!rs.next()} \n"
     }
+    response
   }
 }
