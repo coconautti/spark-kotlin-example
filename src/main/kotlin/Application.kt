@@ -2,6 +2,8 @@ import com.fasterxml.jackson.databind.*
 import java.sql.*
 import org.flywaydb.core.*
 import spark.kotlin.*
+import org.jooq.impl.DSL
+import org.jooq.*
 
 object Database {
     val jdbcConnectionUrl = "jdbc:h2:file:./spark-kotlin"
@@ -15,7 +17,7 @@ object Database {
 
     fun connection(): Connection = DriverManager.getConnection(jdbcConnectionUrl)
 
-    fun withConnection(body: (Connection) -> Any): Any {
+    inline fun withConnection(body: (Connection) -> Any): Any {
         val conn = connection()
         try {
             return body(conn)
@@ -23,6 +25,10 @@ object Database {
             conn.close()
         }
     }
+
+    fun query(): DSLContext = DSL.using(jdbcConnectionUrl)
+
+    inline fun withQuery(body: (DSLContext) -> Any): Any = body(query())
 }
 
 object Json {
@@ -31,7 +37,7 @@ object Json {
     fun toJson(model: Any?): String = objectMapper.writeValueAsString(model)
 }
 
-data class StatusReponse(val connectionStatus: String, val migrationStatus: Boolean)
+data class StatusReponse(val dbConnection: String, val dbMigrated: Boolean)
 
 class Application
 
@@ -46,10 +52,8 @@ fun main(args: Array<String>) {
     }
 
     http.get("/status") {
-        Database.withConnection { conn ->
-            val connectionStatus = if (conn.isClosed) "closed" else "open"
-            val migrationStatus = !conn.createStatement().executeQuery("SELECT * FROM users").next()
-            Json.toJson(StatusReponse(connectionStatus, migrationStatus))
-        }
+        val dbConnection = Database.withConnection { conn -> if (conn.isClosed) "fail" else "ok" } as String
+        val dbMigrated = Database.withQuery { query -> query.select().from("users").fetch().size >= 0 } as Boolean
+        Json.toJson(StatusReponse(dbConnection, dbMigrated))
     }
 }

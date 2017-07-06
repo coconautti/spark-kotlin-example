@@ -16,4 +16,5 @@ dependencies {
     compile 'org.flywaydb:flyway-core:4.2.0'
     compile 'com.h2database:h2:1.4.196'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.9'
+    compile 'org.jooq:jooq:3.9.3'
 }
