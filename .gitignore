@@ -1,3 +1,5 @@
 .gradle
+.idea
 build
+spark-kotlin.iml
 spark-kotlin.mv.db
